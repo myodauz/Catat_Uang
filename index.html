@@ -3,1093 +3,576 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Formula Sukses — Habit Tracker</title>
+<title>Buku Kas — Catatan Keuangan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+  :root{
+    --paper:#F6F4EE;
+    --paper-raised:#FFFFFF;
+    --ink:#16231F;
+    --ink-soft:#5B6B63;
+    --line:#DAD5C7;
+    --sage:#4C7A6C;
+    --sage-soft:#DCE7E1;
+    --amber:#B4863A;
+    --amber-soft:#F0E4CC;
+    --rust:#B25A42;
+    --rust-soft:#F1DCD4;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:960px;margin:0 auto;padding:28px 20px 80px;}
 
-:root{
-  --gold:#D4A64A;
-  --gold-deep:#A67C2E;
-  --teal:#4C7B72;
-  --teal-deep:#33564F;
-  --wine:#8B3A3A;
+  /* Header — buku kas / passbook feel */
+  header{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    border-bottom:2px solid var(--ink);
+    padding-bottom:14px;margin-bottom:22px;
+  }
+  header .title{
+    font-family:'Newsreader',serif;
+    font-size:28px;font-weight:600;letter-spacing:-0.01em;
+  }
+  header .subtitle{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;color:var(--ink-soft);letter-spacing:0.06em;text-transform:uppercase;margin-top:4px;
+  }
+  header .date-stamp{
+    font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink-soft);
+    border:1px solid var(--line);padding:6px 10px;border-radius:6px;background:var(--paper-raised);
+  }
 
-  --bg-page:#F6F0E2;
-  --bg-card:#FCF9F1;
-  --bg-card-alt:#EBE1C8;
-  --text-primary:#101B30;
-  --text-secondary:#5B5F6B;
-  --border:rgba(29,53,87,0.16);
-  --shadow: 0 8px 22px rgba(16,27,48,0.09);
-  --overlay-bg: rgba(16,27,48,0.55);
-  --radius: 12px;
-}
-:root[data-theme="dark"]{
-  --gold:#E3B85C;
-  --gold-deep:#C99A44;
-  --teal:#5FA096;
-  --teal-deep:#4A8079;
-  --wine:#D07A7A;
+  /* Summary cards */
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:22px;}
+  .card{
+    background:var(--paper-raised);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px 18px;position:relative;overflow:hidden;
+  }
+  .card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;}
+  .card.saldo::before{background:var(--sage);}
+  .card.tabungan::before{background:var(--amber);}
+  .card.hutang::before{background:var(--rust);}
+  .card .label{font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-soft);font-weight:600;margin-bottom:8px;}
+  .card .amount{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;}
+  .card.saldo .amount{color:var(--sage);}
+  .card.tabungan .amount{color:var(--amber);}
+  .card.hutang .amount{color:var(--rust);}
 
-  --bg-page:#0F1826;
-  --bg-card:#16223A;
-  --bg-card-alt:#1E2C48;
-  --text-primary:#F1ECDC;
-  --text-secondary:#9BA6BF;
-  --border:rgba(255,255,255,0.12);
-  --shadow: 0 8px 22px rgba(0,0,0,0.4);
-  --overlay-bg: rgba(0,0,0,0.65);
-}
-*{box-sizing:border-box;}
-html,body{margin:0;padding:0;}
-body{
-  background:var(--bg-page);
-  color:var(--text-primary);
-  font-family:'Montserrat',sans-serif;
-  min-height:100vh;
-  transition: background-color .2s ease, color .2s ease;
-}
-.mono{font-family:'JetBrains Mono',monospace;}
-#app{max-width:1180px;margin:0 auto;padding:28px 20px 80px;}
+  /* Section */
+  .section{
+    background:var(--paper-raised);border:1px solid var(--line);border-radius:var(--radius);
+    padding:18px 20px;margin-bottom:16px;
+  }
+  .section h2{
+    font-family:'Newsreader',serif;font-size:17px;font-weight:600;margin:0 0 14px;
+    display:flex;align-items:center;gap:8px;
+  }
+  .section h2 .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ink-soft);font-weight:500;letter-spacing:0.08em;}
 
-/* ---------- Header ---------- */
-.app-header{
-  display:flex;align-items:center;justify-content:space-between;gap:16px;
-  margin-bottom:28px;flex-wrap:wrap;
-}
-.header-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
-.brand{display:flex;align-items:center;gap:14px;}
-.brand-mark{
-  width:50px;height:50px;border-radius:50%;
-  background: var(--gold);
-  border:2px solid var(--gold-deep);
-  display:flex;align-items:center;justify-content:center;
-  flex-shrink:0;
-}
-.brand-mark svg{width:24px;height:24px;}
-.brand-text h1{margin:0;font-size:19px;font-weight:800;color:var(--text-primary);letter-spacing:0.2px;}
-.brand-text p{margin:2px 0 0;font-size:12.5px;color:var(--text-secondary);font-weight:500;}
-.btn{
-  font-family:'Montserrat',sans-serif;font-weight:700;font-size:13.5px;
-  border:none;border-radius:9px;cursor:pointer;padding:12px 18px;
-  display:inline-flex;align-items:center;gap:8px;transition:transform .12s ease, background .12s ease, border-color .12s ease;
-  letter-spacing:0.2px;
-}
-.btn:active{transform:translateY(1px);}
-.btn-primary{background:var(--gold);color:#191100;}
-.btn-primary:hover{background:var(--gold-deep);color:#fff;}
-.btn-outline{background:transparent;color:var(--text-primary);border:1.5px solid var(--border);}
-.btn-outline:hover{border-color:var(--gold-deep);}
-.btn-ghost{background:transparent;color:var(--text-secondary);padding:8px 10px;}
-.btn-ghost:hover{color:var(--wine);}
-.btn-icon{width:42px;height:42px;padding:0;justify-content:center;border-radius:9px;background:transparent;border:1.5px solid var(--border);color:var(--text-primary);font-size:17px;}
-.btn-icon:hover{border-color:var(--gold-deep);}
-.btn-sm{padding:8px 12px;font-size:12.5px;}
-.btn-danger{background:transparent;color:var(--wine);border:1.5px solid var(--wine);}
-.btn-danger:hover{background:var(--wine);color:#fff;}
-.btn-teal{background:var(--teal);color:#fff;}
-.btn-teal:hover{background:var(--teal-deep);}
+  .charts-row{display:grid;grid-template-columns:1fr 1.3fr;gap:16px;}
+  .chart-box{height:230px;position:relative;}
+  @media (max-width:720px){.charts-row{grid-template-columns:1fr;} .cards{grid-template-columns:1fr;}}
 
-/* ---------- Dashboard grid ---------- */
-.goal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px;}
-.goal-card{
-  background:var(--bg-card);border-radius:var(--radius);box-shadow:var(--shadow);
-  border:1px solid var(--border);border-top:4px solid var(--gold);
-  padding:20px;cursor:pointer;
-  transition: transform .15s ease, border-color .15s ease;
-  display:flex;flex-direction:column;gap:14px;
-}
-.goal-card:hover{transform:translateY(-2px);border-top-color:var(--teal);}
-.goal-card-top{display:flex;align-items:center;gap:12px;}
-.goal-icon{
-  width:44px;height:44px;border-radius:10px;background:var(--bg-card-alt);
-  display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;
-}
-.goal-card-title{font-weight:800;font-size:16px;color:var(--text-primary);line-height:1.25;}
-.goal-card-cat{font-size:11.5px;color:var(--text-secondary);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;}
-.goal-card-mid{display:flex;align-items:center;gap:16px;}
-.ring-wrap{position:relative;width:76px;height:76px;flex-shrink:0;}
-.ring-wrap svg{transform:rotate(-90deg);}
-.ring-pct{
-  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-  font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;color:var(--text-primary);
-}
-.goal-card-stat{flex:1;min-width:0;}
-.goal-card-stat .row{display:flex;justify-content:space-between;font-size:12px;color:var(--text-secondary);margin-bottom:3px;}
-.goal-card-stat .row b{color:var(--text-primary);font-family:'JetBrains Mono',monospace;font-weight:700;}
-.goal-card-flow{font-size:12px;color:var(--text-secondary);line-height:1.5;background:var(--bg-card-alt);padding:10px 12px;border-radius:8px;}
-.goal-card-flow b{color:var(--teal-deep);}
-:root[data-theme="dark"] .goal-card-flow b{color:var(--teal);}
-.goal-card-actions{display:flex;gap:8px;justify-content:flex-end;}
+  /* Form input manual */
+  form{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:end;}
+  @media (max-width:720px){form{grid-template-columns:1fr 1fr;}}
+  label{font-size:11px;color:var(--ink-soft);font-weight:600;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.04em;}
+  select, input[type=text], input[type=number]{
+    width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:7px;
+    background:var(--paper);font-family:'Inter',sans-serif;font-size:14px;color:var(--ink);
+  }
+  select:focus, input:focus{outline:2px solid var(--sage);outline-offset:1px;}
+  .btn{
+    background:var(--ink);color:var(--paper);border:none;border-radius:7px;
+    padding:10px 16px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;
+  }
+  .btn:hover{background:var(--sage);}
+  .btn:active{transform:translateY(1px);}
+  .jenis-toggle{display:flex;gap:6px;grid-column:1/-1;margin-bottom:2px;}
+  .jenis-toggle button{
+    flex:1;padding:8px;border:1px solid var(--line);background:var(--paper);border-radius:7px;
+    font-size:12px;font-weight:600;cursor:pointer;color:var(--ink-soft);
+  }
+  .jenis-toggle button.active{background:var(--ink);color:var(--paper);border-color:var(--ink);}
 
-.empty-state{
-  text-align:center;padding:70px 20px;background:var(--bg-card);border-radius:var(--radius);
-  border:1.5px dashed var(--border);box-shadow:var(--shadow);
-}
-.empty-state .cmp{width:64px;height:64px;margin:0 auto 18px;}
-.empty-state h2{margin:0 0 8px;color:var(--text-primary);font-size:20px;}
-.empty-state p{margin:0 0 22px;color:var(--text-secondary);font-size:14px;max-width:420px;margin-left:auto;margin-right:auto;}
+  /* Riwayat / table */
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{
+    text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-soft);
+    font-weight:600;padding:8px 8px;border-bottom:1px solid var(--line);
+  }
+  td{padding:9px 8px;border-bottom:1px dashed var(--line);font-family:'IBM Plex Mono',monospace;font-size:12.5px;}
+  td.ket{font-family:'Inter',sans-serif;font-size:13px;}
+  td.jumlah{text-align:right;font-weight:600;font-variant-numeric:tabular-nums;}
+  .tag{
+    display:inline-block;padding:2px 8px;border-radius:20px;font-size:10.5px;font-weight:600;
+    font-family:'Inter',sans-serif;
+  }
+  .tag.masuk{background:var(--sage-soft);color:var(--sage);}
+  .tag.keluar{background:var(--rust-soft);color:var(--rust);}
+  .tag.tabungan{background:var(--amber-soft);color:var(--amber);}
+  tr.masuk td.jumlah{color:var(--sage);}
+  tr.keluar td.jumlah{color:var(--rust);}
+  tr.tabungan td.jumlah{color:var(--amber);}
+  .row-actions{display:flex;gap:6px;}
+  .icon-btn{
+    border:1px solid var(--line);background:var(--paper-raised);border-radius:6px;
+    padding:6px 10px;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;color:var(--ink);font-weight:600;
+  }
+  .icon-btn:hover{background:var(--sage-soft);border-color:var(--sage);}
+  .icon-btn.danger{color:var(--rust);}
+  .icon-btn.danger:hover{background:var(--rust-soft);border-color:var(--rust);}
+  .icon-btn.confirm{background:var(--rust);color:#fff;border-color:var(--rust);}
+  .inline-error{color:var(--rust);font-size:12px;font-weight:600;grid-column:1/-1;display:none;}
+  form.editing{outline:2px solid var(--sage);outline-offset:3px;border-radius:10px;}
+  .cancel-edit{background:transparent;border:1px solid var(--line);color:var(--ink-soft);border-radius:7px;padding:10px 14px;font-size:13px;cursor:pointer;display:none;}
 
-/* ---------- Modal ---------- */
-.overlay{
-  position:fixed;inset:0;background:var(--overlay-bg);
-  display:flex;align-items:center;justify-content:center;z-index:100;padding:20px;
-}
-.modal{
-  background:var(--bg-card);border-radius:14px;width:100%;max-width:560px;max-height:88vh;overflow-y:auto;
-  box-shadow:0 20px 50px rgba(0,0,0,0.4);border:1px solid var(--border);
-}
-.modal-sm{max-width:400px;}
-.modal-header{
-  padding:22px 26px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;
-  position:sticky;top:0;background:var(--bg-card);z-index:2;
-}
-.modal-header h3{margin:0;font-size:17px;color:var(--text-primary);font-weight:800;}
-.modal-body{padding:22px 26px;}
-.modal-footer{padding:18px 26px 24px;display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;}
-.field{margin-bottom:16px;}
-.field label{display:block;font-size:12.5px;font-weight:700;color:var(--text-primary);margin-bottom:6px;letter-spacing:0.2px;}
-.field .hint{font-size:11px;color:var(--text-secondary);margin-top:5px;line-height:1.5;}
-.field input[type=text], .field input[type=number], .field input[type=date], .field input[type=time], .field input[type=password], .field textarea, .field select{
-  width:100%;padding:11px 13px;border-radius:8px;border:1.5px solid var(--border);
-  font-family:'Montserrat',sans-serif;font-size:13.5px;color:var(--text-primary);background:var(--bg-page);
-}
-.field input:focus, .field textarea:focus, .field select:focus{outline:none;border-color:var(--gold-deep);}
-.field textarea{resize:vertical;min-height:64px;}
-.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-.icon-picker{display:flex;flex-wrap:wrap;gap:8px;}
-.icon-choice{
-  width:40px;height:40px;border-radius:9px;border:1.5px solid var(--border);background:var(--bg-page);
-  display:flex;align-items:center;justify-content:center;font-size:19px;cursor:pointer;
-}
-.icon-choice.active{border-color:var(--gold-deep);background:var(--bg-card-alt);}
-.checkbox-row{display:flex;align-items:center;gap:9px;}
-.checkbox-row input{width:16px;height:16px;}
-.checkbox-row label{margin:0;font-size:13px;font-weight:600;color:var(--text-primary);}
-.help-box{background:var(--bg-card-alt);border-radius:9px;padding:14px 16px;font-size:12px;color:var(--text-secondary);line-height:1.7;margin-bottom:16px;}
-.help-box b{color:var(--text-primary);}
-.help-box code{background:var(--bg-page);padding:1px 5px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:11px;}
+  .empty-state{text-align:center;padding:30px 10px;color:var(--ink-soft);font-size:13px;}
 
-/* ---------- Detail view ---------- */
-.detail-header{display:flex;align-items:center;gap:14px;margin-bottom:20px;flex-wrap:wrap;}
-.detail-title-wrap{display:flex;align-items:center;gap:12px;flex:1;min-width:200px;}
-.detail-icon{width:48px;height:48px;border-radius:10px;background:var(--bg-card-alt);display:flex;align-items:center;justify-content:center;font-size:24px;}
-.detail-title h2{margin:0;font-size:20px;color:var(--text-primary);font-weight:800;}
-.detail-title span{font-size:12px;color:var(--text-secondary);font-weight:600;}
-.tabs{display:flex;gap:4px;background:var(--bg-card-alt);padding:5px;border-radius:10px;margin-bottom:22px;flex-wrap:wrap;}
-.tab-btn{
-  flex:1;min-width:140px;text-align:center;padding:11px 14px;border-radius:7px;border:none;background:transparent;
-  font-family:'Montserrat',sans-serif;font-weight:700;font-size:12.5px;color:var(--text-secondary);cursor:pointer;
-  letter-spacing:0.3px;
-}
-.tab-btn.active{background:var(--bg-card);color:var(--text-primary);}
-
-.card{background:var(--bg-card);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--border);padding:22px;margin-bottom:18px;}
-.card h4{margin:0 0 14px;font-size:14px;color:var(--text-primary);font-weight:800;letter-spacing:0.2px;display:flex;align-items:center;gap:8px;}
-.flow-pair{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:stretch;}
-.flow-box{background:var(--bg-card-alt);border-radius:9px;padding:16px 18px;border:1px solid var(--border);}
-.flow-box.now{border-left:4px solid var(--wine);}
-.flow-box.want{border-left:4px solid var(--teal);}
-.flow-label{font-size:10.5px;text-transform:uppercase;letter-spacing:0.6px;font-weight:800;color:var(--text-secondary);margin-bottom:6px;}
-.flow-text{font-size:13.5px;color:var(--text-primary);line-height:1.5;}
-.flow-arrow{display:flex;align-items:center;justify-content:center;color:var(--gold-deep);font-size:22px;font-weight:800;}
-.how-box{background:var(--bg-card-alt);border:1px solid var(--gold-deep);border-radius:9px;padding:16px 18px;margin-top:14px;}
-.how-box .flow-label{color:var(--gold-deep);}
-.how-box .flow-text{color:var(--text-primary);font-weight:600;}
-
-.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-top:16px;}
-.stat-box{background:var(--bg-card-alt);border-radius:9px;padding:14px 16px;text-align:center;}
-.stat-box.highlight{border:1.5px solid var(--gold-deep);}
-.stat-box .num{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:18px;color:var(--text-primary);}
-.stat-box .lbl{font-size:10.5px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;font-weight:700;margin-top:4px;}
-
-.legend{display:flex;gap:16px;font-size:11.5px;color:var(--text-secondary);margin-top:10px;flex-wrap:wrap;}
-.legend span{display:inline-flex;align-items:center;gap:6px;}
-.legend i{width:14px;height:3px;border-radius:2px;display:inline-block;}
-
-/* ---------- Month / Week table ---------- */
-.month-item{border:1px solid var(--border);border-radius:9px;margin-bottom:10px;overflow:hidden;background:var(--bg-page);}
-.month-head{
-  display:grid;grid-template-columns:26px 1.4fr 1fr 1fr 90px 22px;gap:10px;align-items:center;
-  padding:12px 14px;cursor:pointer;background:var(--bg-card);
-}
-.month-head:hover{background:var(--bg-card-alt);}
-.month-name{font-weight:700;font-size:13px;color:var(--text-primary);}
-.month-head .mini-lbl{font-size:9.5px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.4px;font-weight:700;display:block;margin-bottom:2px;}
-.editable-num{
-  width:100%;border:1px solid transparent;background:transparent;font-family:'JetBrains Mono',monospace;
-  font-weight:700;font-size:13px;color:var(--text-primary);padding:4px 6px;border-radius:6px;
-}
-.editable-num:hover{border-color:var(--border);}
-.editable-num:focus{outline:none;border-color:var(--gold-deep);background:var(--bg-card);}
-.prog-mini{height:6px;background:var(--bg-card-alt);border-radius:4px;overflow:hidden;}
-.prog-mini > div{height:100%;background:var(--teal);}
-.chevron{transition:transform .2s;color:var(--text-secondary);font-size:11px;}
-.chevron.open{transform:rotate(90deg);}
-.week-list{padding:6px 14px 14px 40px;background:var(--bg-card-alt);display:none;}
-.week-list.open{display:block;}
-.week-row{
-  display:grid;grid-template-columns:1fr 1fr 1fr 90px;gap:10px;align-items:center;
-  padding:9px 10px;font-size:12.5px;border-bottom:1px dashed var(--border);
-}
-.week-row:last-child{border-bottom:none;}
-.week-row .wk-name{font-weight:600;color:var(--text-primary);}
-
-/* ---------- Daily checklist ---------- */
-.day-controls{display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap;}
-.day-controls select{padding:9px 12px;border-radius:8px;border:1.5px solid var(--border);font-family:'Montserrat',sans-serif;font-weight:600;font-size:13px;background:var(--bg-page);color:var(--text-primary);}
-.week-block{margin-bottom:18px;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--bg-page);}
-.week-block-head{
-  display:flex;justify-content:space-between;align-items:center;padding:12px 16px;
-  background:var(--bg-card-alt);color:var(--text-primary);border-bottom:1px solid var(--border);
-}
-.week-block-head b{font-size:13px;}
-.week-block-head span{font-size:11.5px;color:var(--text-secondary);font-family:'JetBrains Mono',monospace;}
-.day-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;padding:14px 16px;}
-.day-cell{
-  border:1.5px solid var(--border);border-radius:9px;padding:10px 6px;text-align:center;cursor:pointer;
-  background:var(--bg-card);position:relative;
-}
-.day-cell:hover{border-color:var(--gold-deep);}
-.day-cell.done{background:var(--bg-card-alt);border-color:var(--teal);}
-.day-cell.today{border-color:var(--gold-deep);border-style:dashed;border-width:2px;}
-.day-cell .today-badge{position:absolute;top:-8px;left:50%;transform:translateX(-50%);background:var(--gold-deep);color:#fff;font-size:8px;font-weight:800;padding:1px 6px;border-radius:6px;letter-spacing:0.3px;}
-.day-cell .d-num{font-size:10px;color:var(--text-secondary);font-weight:700;text-transform:uppercase;letter-spacing:0.3px;}
-.day-cell .d-check{
-  width:26px;height:26px;border-radius:50%;border:2px solid var(--border);margin:7px auto 6px;
-  display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;background:var(--bg-page);
-}
-.day-cell.done .d-check{background:var(--teal);border-color:var(--teal);}
-.day-cell .d-target{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--text-secondary);}
-.day-cell.done .d-target{color:var(--teal-deep);font-weight:700;}
-:root[data-theme="dark"] .day-cell.done .d-target{color:var(--teal);}
-.day-cell .d-actual-edit{
-  width:90%;margin-top:4px;font-family:'JetBrains Mono',monospace;font-size:10px;text-align:center;
-  border:1px solid var(--border);border-radius:5px;padding:2px 3px;background:var(--bg-page);color:var(--text-primary);
-}
-
-/* ---------- Today highlight card ---------- */
-.today-card{border:1.5px solid var(--gold-deep);background:var(--bg-card-alt);}
-.today-card .num{color:var(--gold-deep);}
-
-/* ---------- responsive ---------- */
-@media (max-width:640px){
-  .flow-pair{grid-template-columns:1fr;}
-  .flow-arrow{transform:rotate(90deg);padding:4px 0;}
-  .row2{grid-template-columns:1fr;}
-  .month-head{grid-template-columns:20px 1fr 1fr;grid-template-rows:auto auto;}
-  .month-head .prog-mini-cell{grid-column:1/-1;}
-  .week-row{grid-template-columns:1fr 1fr;row-gap:4px;}
-  .day-grid{grid-template-columns:repeat(4,1fr);}
-}
-
-.toast{
-  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
-  background:var(--text-primary);color:var(--bg-page);padding:12px 20px;border-radius:9px;font-size:13px;font-weight:600;
-  box-shadow:0 10px 30px rgba(0,0,0,0.3);opacity:0;pointer-events:none;transition:all .25s;z-index:200;
-}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-
-.loading-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:14px;color:var(--text-secondary);}
+  .config-note{
+    font-size:12px;color:var(--ink-soft);background:var(--amber-soft);border:1px solid var(--amber);
+    border-radius:7px;padding:10px 12px;margin-bottom:16px;line-height:1.5;
+  }
+  .config-note code{background:rgba(0,0,0,0.06);padding:1px 5px;border-radius:4px;}
+  footer{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:20px;font-family:'IBM Plex Mono',monospace;}
 </style>
 </head>
 <body>
-<div id="app"></div>
-<div class="toast" id="toast"></div>
+<div class="wrap">
+
+  <header>
+    <div>
+      <div class="title">Buku Kas</div>
+      <div class="subtitle">Catatan Pengeluaran &amp; Pemasukan</div>
+    </div>
+    <div class="date-stamp" id="todayStamp"></div>
+  </header>
+
+  <div class="config-note" id="configNote">
+    Dashboard ini masih pakai <strong>data lokal di browser ini saja</strong>. Untuk sinkron ke Google Sheets &amp; Telegram: buka <code>Code.gs</code>, jalankan <code>setupSheets</code>, deploy sebagai Web App, lalu tempel URL &amp; secret key-nya ke <code>APPS_SCRIPT_URL</code> dan <code>SECRET_KEY</code> di bagian atas file ini.
+  </div>
+
+  <div class="section">
+    <h2>Saldo Awal <span class="eyebrow">ATUR SEKALI, LALU OTOMATIS BERUBAH</span></h2>
+    <form id="initForm">
+      <div>
+        <label>Saldo Utama</label>
+        <input type="text" inputmode="numeric" id="initSaldoUtama" placeholder="0">
+      </div>
+      <div>
+        <label>Saldo Tabungan</label>
+        <input type="text" inputmode="numeric" id="initSaldoTabungan" placeholder="0">
+      </div>
+      <div>
+        <label>Sisa Hutang</label>
+        <input type="text" inputmode="numeric" id="initSisaHutang" placeholder="0">
+      </div>
+      <button type="submit" class="btn">Simpan</button>
+    </form>
+  </div>
+
+  <div class="cards">
+    <div class="card saldo">
+      <div class="label">Saldo Utama</div>
+      <div class="amount" id="saldoUtama">Rp 0</div>
+    </div>
+    <div class="card tabungan">
+      <div class="label">Saldo Tabungan</div>
+      <div class="amount" id="saldoTabungan">Rp 0</div>
+    </div>
+    <div class="card hutang">
+      <div class="label">Sisa Hutang</div>
+      <div class="amount" id="sisaHutang">Rp 0</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Catat Transaksi <span class="eyebrow">INPUT MANUAL</span></h2>
+    <form id="txForm">
+      <div class="jenis-toggle">
+        <button type="button" data-jenis="pengeluaran" class="active">Pengeluaran</button>
+        <button type="button" data-jenis="pemasukan">Pemasukan</button>
+      </div>
+      <div>
+        <label>Kategori</label>
+        <select id="kategori"></select>
+      </div>
+      <div>
+        <label>Keterangan</label>
+        <input type="text" id="keterangan" placeholder="mis. siomay, bensin">
+      </div>
+      <div>
+        <label>Jumlah (Rp)</label>
+        <input type="text" inputmode="numeric" id="jumlah" placeholder="5.000">
+      </div>
+      <button type="submit" class="btn" id="submitBtn">+ Catat</button>
+      <button type="button" class="cancel-edit" id="cancelEditBtn">Batal</button>
+      <div class="inline-error" id="formError">Isi jumlah dulu, ya.</div>
+    </form>
+  </div>
+
+  <div class="section">
+    <h2>Ringkasan <span class="eyebrow">BULAN INI</span></h2>
+    <div class="charts-row">
+      <div class="chart-box"><canvas id="pieChart"></canvas></div>
+      <div class="chart-box"><canvas id="barChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Riwayat Transaksi <span class="eyebrow">TERBARU</span></h2>
+    <table id="txTable">
+      <thead>
+        <tr><th>Tanggal</th><th>Jenis</th><th>Kategori</th><th class="ket">Keterangan</th><th style="text-align:right;">Jumlah</th><th>Aksi</th></tr>
+      </thead>
+      <tbody id="txBody"></tbody>
+    </table>
+    <div class="empty-state" id="emptyState" style="display:none;">Belum ada transaksi.</div>
+  </div>
+
+  <footer>Buku Kas &middot; disinkronkan dari Google Sheets &middot; Telegram Bot</footer>
+</div>
 
 <script>
-/* ============================================================
-   FORMULA SUKSES — HABIT TRACKER
-   ============================================================ */
+/* ====== KONFIGURASI — isi setelah Apps Script di-deploy ====== */
+const APPS_SCRIPT_URL = ""; // tempel URL Web App dari Deploy > New deployment di Apps Script
+const SECRET_KEY = "";      // HARUS sama persis dengan SECRET_KEY di Code.gs
 
-const ICONS = ['💻','🕋','💰','📚','🏠','💪','🚗','✈️','🎓','🧘','🌱','👨‍👩‍👧‍👦','⛰️','⭐','🎯'];
-const UNITS = ['Rp','kg','halaman','buku','jam','kali','langkah','custom'];
-const MONTH_NAMES = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+/* ====== KATEGORI ====== */
+const KATEGORI_PENGELUARAN = ["Makan","Rumah Tangga","Transportasi","Kesehatan","Pendidikan","Belanja","Hiburan","Komunikasi","Kewajiban","Sosial","Tabungan","Cicilan","Lain-lain"];
+const KATEGORI_PEMASUKAN = ["Gaji","Jualan","Freelance","Royalty","Lain-lain"];
 
-let state = {
-  goals: [], view: 'dashboard', activeGoalId: null, detailTab: 'ringkasan', modal: null, editingGoal: null,
-  theme: 'light',
-  settings: { botToken:'', chatId:'', reminderTime:'07:00', enabled:false, lastSentDate:null }
+const CATEGORY_COLORS = {
+  "Makan":"#B25A42","Rumah Tangga":"#C4794F","Transportasi":"#B4863A","Kesehatan":"#8E9E4F",
+  "Pendidikan":"#4C7A6C","Belanja":"#5C7FA6","Hiburan":"#7A6CA6","Komunikasi":"#A65C8E",
+  "Kewajiban":"#6C6C6C","Sosial":"#4F8E8E","Tabungan":"#B4863A","Cicilan":"#B25A42","Lain-lain":"#9B9B9B"
 };
-let saveGoalsTimer = null, saveSettingsTimer = null, reminderInterval = null;
 
-/* ---------------- storage ---------------- */
-async function loadAll(){
-  try{
-    const g = await window.storage.get('formulaSukses_goals');
-    if(g && g.value) state.goals = JSON.parse(g.value);
-  }catch(e){ state.goals = []; }
-  try{
-    const s = await window.storage.get('formulaSukses_settings');
-    if(s && s.value) state.settings = Object.assign(state.settings, JSON.parse(s.value));
-  }catch(e){ /* keep defaults */ }
-  try{
-    const t = await window.storage.get('formulaSukses_theme');
-    if(t && t.value) state.theme = t.value;
-  }catch(e){ /* keep default */ }
-  document.documentElement.setAttribute('data-theme', state.theme);
-  render();
-  startReminderClock();
-}
-function saveGoals(){
-  clearTimeout(saveGoalsTimer);
-  saveGoalsTimer = setTimeout(async ()=>{
-    try{ await window.storage.set('formulaSukses_goals', JSON.stringify(state.goals)); }
-    catch(e){ showToast('Gagal menyimpan data'); }
-  }, 250);
-}
-function saveSettings(){
-  clearTimeout(saveSettingsTimer);
-  saveSettingsTimer = setTimeout(async ()=>{
-    try{ await window.storage.set('formulaSukses_settings', JSON.stringify(state.settings)); }
-    catch(e){ showToast('Gagal menyimpan pengaturan'); }
-  }, 200);
-}
-async function saveTheme(){
-  try{ await window.storage.set('formulaSukses_theme', state.theme); }catch(e){}
-}
+/* ====== STATE LOKAL (tersimpan di browser via localStorage) ====== */
+const STORAGE_KEY = "buku-kas-state-v1";
 
-function showToast(msg){
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'), 2400);
+function loadState(){
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if(saved) return JSON.parse(saved);
+  return {
+    saldoAwal: { saldoUtama: 0, saldoTabungan: 0, sisaHutang: 0 },
+    transaksi: [
+      {id:"c1", tanggal:"12 Agu", jenis:"pengeluaran", kategori:"Makan", keterangan:"Siomay (contoh)", jumlah:5000},
+      {id:"c2", tanggal:"11 Agu", jenis:"pemasukan", kategori:"Freelance", keterangan:"Proyek desain (contoh)", jumlah:500000},
+    ]
+  };
 }
+function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
 
-/* ---------------- theme ---------------- */
-function toggleTheme(){
-  state.theme = state.theme==='dark' ? 'light' : 'dark';
-  document.documentElement.setAttribute('data-theme', state.theme);
-  saveTheme(); render();
+let state = loadState();
+let currentJenis = "pengeluaran";
+let editingId = null;
+let pendingDeleteId = null;
+let pieChart, barChart;
+
+function mulaiEdit(id){
+  pendingDeleteId = null;
+  const t = state.transaksi.find(x => x.id === id);
+  if(!t) return;
+  editingId = id;
+  currentJenis = t.jenis === "tabungan" ? "pengeluaran" : t.jenis; // tabungan pakai kategori "Tabungan" di list pengeluaran
+  document.querySelectorAll(".jenis-toggle button").forEach(b=>{
+    b.classList.toggle("active", b.dataset.jenis === currentJenis);
+  });
+  populateKategori();
+  document.getElementById("kategori").value = t.kategori;
+  document.getElementById("keterangan").value = t.keterangan;
+  jumlahInput.value = Number(t.jumlah).toLocaleString("id-ID");
+
+  document.getElementById("submitBtn").textContent = "Simpan Perubahan";
+  document.getElementById("cancelEditBtn").style.display = "inline-block";
+  document.getElementById("txForm").classList.add("editing");
+  document.getElementById("txForm").scrollIntoView({behavior:"smooth", block:"center"});
+  renderTable(state.transaksi);
 }
 
-/* ---------------- helpers ---------------- */
-function uid(){ return 'g_' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function batalEdit(){
+  editingId = null;
+  document.getElementById("txForm").reset();
+  document.getElementById("submitBtn").textContent = "+ Catat";
+  document.getElementById("cancelEditBtn").style.display = "none";
+  document.getElementById("txForm").classList.remove("editing");
+  populateKategori();
+}
+document.getElementById("cancelEditBtn").addEventListener("click", batalEdit);
 
-function roundSensible(val, unit){
-  if(!isFinite(val)) return 0;
-  if(unit === 'Rp'){ return Math.ceil(val/1000)*1000; }
-  if(['halaman','buku','kali','langkah'].includes(unit)){ return Math.ceil(val); }
-  return Math.round(val*10)/10;
-}
-function fmtNum(n, unit){
-  if(n===null||n===undefined||isNaN(n)) n=0;
-  const num = unit==='Rp' ? Math.round(n).toLocaleString('id-ID') : (Math.round(n*10)/10).toLocaleString('id-ID');
-  return unit==='Rp' ? ('Rp ' + num) : (num + (unit && unit!=='custom' ? ' '+unit : ''));
-}
-function fmtCompact(v,unit){
-  if(unit==='Rp'){
-    if(v>=1000000) return (v/1000000).toFixed(1)+'jt';
-    if(v>=1000) return Math.round(v/1000)+'rb';
-    return Math.round(v).toString();
+function hapusTransaksi(id){
+  if(pendingDeleteId !== id){
+    pendingDeleteId = id; // klik pertama: tampilkan "Yakin?"
+    renderTable(state.transaksi);
+    return;
   }
-  return (Math.round(v*10)/10).toString();
+  // klik kedua: benar-benar hapus
+  pendingDeleteId = null;
+  state.transaksi = state.transaksi.filter(t => t.id !== id);
+  saveState();
+  refreshAll();
+  if(editingId === id) batalEdit();
 }
 
-function buildDefaultMonths(currentValue, targetValue){
-  const remaining = Math.max(targetValue - currentValue, 0);
-  const perMonth = remaining/12;
-  const months = [];
-  for(let m=0;m<12;m++){
-    const weeks = [];
-    const perWeek = perMonth/4;
-    for(let w=0;w<4;w++){
-      const days = [];
-      for(let d=0;d<7;d++){ days.push({ checked:false, actual:null }); }
-      weeks.push({ target: perWeek, days });
+document.getElementById("txBody").addEventListener("click", (e)=>{
+  const btn = e.target.closest("button[data-action]");
+  if(!btn) return;
+  const id = btn.dataset.id;
+  if(btn.dataset.action === "edit") mulaiEdit(id);
+  if(btn.dataset.action === "delete") hapusTransaksi(id);
+});
+
+function hitungSaldo(){
+  let { saldoUtama, saldoTabungan, sisaHutang } = state.saldoAwal;
+  state.transaksi.forEach(t=>{
+    const j = Number(t.jumlah);
+    if(t.jenis === "pemasukan") saldoUtama += j;
+    else if(t.jenis === "tabungan"){ saldoUtama -= j; saldoTabungan += j; }
+    else if(t.kategori === "Cicilan"){ saldoUtama -= j; sisaHutang = Math.max(0, sisaHutang - j); }
+    else { saldoUtama -= j; } // pengeluaran biasa
+  });
+  return { saldoUtama, saldoTabungan, sisaHutang };
+}
+
+function formatRupiah(n){
+  return "Rp " + Number(n).toLocaleString("id-ID");
+}
+
+function populateKategori(){
+  const sel = document.getElementById("kategori");
+  const list = currentJenis === "pemasukan" ? KATEGORI_PEMASUKAN : KATEGORI_PENGELUARAN;
+  sel.innerHTML = list.map(k => `<option value="${k}">${k}</option>`).join("");
+}
+
+/* Auto-format input jumlah pakai titik ribuan (1.000.000) sambil mengetik */
+const jumlahInput = document.getElementById("jumlah");
+jumlahInput.addEventListener("input", (e)=>{
+  let raw = e.target.value.replace(/\D/g, ""); // buang semua selain angka
+  e.target.value = raw ? Number(raw).toLocaleString("id-ID") : "";
+});
+function getJumlahValue(){
+  return Number(jumlahInput.value.replace(/\D/g, "")) || 0;
+}
+
+document.querySelectorAll(".jenis-toggle button").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    document.querySelectorAll(".jenis-toggle button").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    currentJenis = btn.dataset.jenis;
+    populateKategori();
+  });
+});
+
+function renderSaldo(saldo){
+  document.getElementById("saldoUtama").textContent = formatRupiah(saldo.saldoUtama);
+  document.getElementById("saldoTabungan").textContent = formatRupiah(saldo.saldoTabungan);
+  document.getElementById("sisaHutang").textContent = formatRupiah(saldo.sisaHutang);
+}
+
+function renderTable(transaksi){
+  const body = document.getElementById("txBody");
+  const empty = document.getElementById("emptyState");
+  if(!transaksi.length){
+    body.innerHTML = "";
+    empty.style.display = "block";
+    return;
+  }
+  empty.style.display = "none";
+  body.innerHTML = transaksi.slice(0,30).map(t=>{
+    const tagClass = t.jenis === "pemasukan" ? "masuk" : (t.jenis === "tabungan" ? "tabungan" : "keluar");
+    const sign = t.jenis === "pemasukan" ? "+" : "-";
+    const label = t.jenis === "pemasukan" ? "Masuk" : (t.jenis === "tabungan" ? "Tabungan" : "Keluar");
+    const isConfirming = pendingDeleteId === t.id;
+    return `<tr class="${tagClass}">
+      <td>${t.tanggal}</td>
+      <td><span class="tag ${tagClass}">${label}</span></td>
+      <td>${t.kategori}</td>
+      <td class="ket">${t.keterangan}</td>
+      <td class="jumlah">${sign} ${formatRupiah(t.jumlah)}</td>
+      <td><div class="row-actions">
+        <button type="button" class="icon-btn" data-action="edit" data-id="${t.id}">Edit</button>
+        <button type="button" class="icon-btn ${isConfirming ? 'confirm' : 'danger'}" data-action="delete" data-id="${t.id}">${isConfirming ? 'Yakin?' : 'Hapus'}</button>
+      </div></td>
+    </tr>`;
+  }).join("");
+}
+
+function renderCharts(transaksi){
+  if(typeof Chart === "undefined"){
+    console.warn("Chart.js tidak berhasil dimuat (kemungkinan CDN diblokir) — grafik dilewati, fitur lain tetap jalan.");
+    const boxes = document.querySelectorAll(".chart-box");
+    boxes.forEach(b=>{ if(!b.dataset.warned){ b.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--ink-soft);font-size:12px;text-align:center;padding:0 16px;">Grafik tidak bisa dimuat (koneksi ke CDN diblokir). Fitur lain tetap berfungsi normal.</div>'; b.dataset.warned = "1"; } });
+    return;
+  }
+  try{
+    renderChartsInner(transaksi);
+  }catch(err){
+    console.error("Gagal render grafik:", err);
+  }
+}
+
+function renderChartsInner(transaksi){
+  const pengeluaran = transaksi.filter(t=>t.jenis==="pengeluaran");
+  const byKategori = {};
+  pengeluaran.forEach(t=>{ byKategori[t.kategori] = (byKategori[t.kategori]||0) + Number(t.jumlah); });
+  const labels = Object.keys(byKategori);
+  const values = Object.values(byKategori);
+  const colors = labels.map(l => CATEGORY_COLORS[l] || "#9B9B9B");
+
+  const pieCtx = document.getElementById("pieChart");
+  if(pieChart) pieChart.destroy();
+  pieChart = new Chart(pieCtx, {
+    type: "doughnut",
+    data: { labels, datasets: [{ data: values, backgroundColor: colors, borderColor: "#FFFFFF", borderWidth: 2 }] },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:"right", labels:{ boxWidth:10, font:{size:10.5, family:"Inter"}, color:"#5B6B63" } },
+      title:{display:true, text:"Pengeluaran per Kategori", font:{size:12, family:"Inter", weight:600}, color:"#16231F", padding:{bottom:10}} }
     }
-    months.push({ target: perMonth, weeks });
-  }
-  return months;
-}
-
-function goalUnit(g){ return g.unit === 'custom' ? (g.unitCustom||'') : g.unit; }
-function dayTarget(week){ return week.target/7; }
-
-function sumActualForWeek(week, unit){
-  let sum=0;
-  week.days.forEach(d=>{
-    if(d.checked){ sum += (d.actual!==null && d.actual!==undefined) ? d.actual : roundSensible(dayTarget(week), unit); }
-  });
-  return sum;
-}
-function sumActualForMonth(month, unit){ return month.weeks.reduce((s,w)=>s+sumActualForWeek(w,unit),0); }
-function sumActualTotal(goal){ const unit = goalUnit(goal); return goal.months.reduce((s,m)=>s+sumActualForMonth(m,unit),0); }
-function sumTargetUpToMonth(goal, idx){ let s=0; for(let i=0;i<=idx;i++){ s+=goal.months[i].target; } return s; }
-function sumActualUpToMonth(goal, idx){ const unit = goalUnit(goal); let s=0; for(let i=0;i<=idx;i++){ s+=sumActualForMonth(goal.months[i],unit); } return s; }
-
-function goalProgress(goal){
-  const achieved = goal.currentValue + sumActualTotal(goal);
-  const pct = goal.targetValue>0 ? Math.min(100, Math.round((achieved/goal.targetValue)*100)) : 0;
-  return { achieved, pct };
-}
-
-/* today-cell mapping: approximate 28-day months (4 weeks x 7 days), consistent with the plan's own structure */
-function getTodayCell(goal){
-  if(!goal.startDate) return null;
-  const start = new Date(goal.startDate+'T00:00:00');
-  const now = new Date(); now.setHours(0,0,0,0);
-  const daysSince = Math.floor((now-start)/86400000);
-  if(daysSince < 0 || daysSince >= 12*28) return null;
-  const mi = Math.floor(daysSince/28);
-  const rem = daysSince % 28;
-  const wi = Math.floor(rem/7);
-  const di = rem % 7;
-  return { mi, wi, di };
-}
-
-function getGoal(id){ return state.goals.find(g=>g.id===id); }
-
-/* ---------------- render root ---------------- */
-function render(){
-  const app = document.getElementById('app');
-  app.innerHTML = renderHeader() + (state.view==='dashboard' ? renderDashboard() : renderDetail());
-  if(state.modal === 'goal') app.insertAdjacentHTML('beforeend', renderGoalModal());
-  if(state.modal === 'delete-confirm') app.insertAdjacentHTML('beforeend', renderDeleteModal());
-  if(state.modal === 'settings') app.insertAdjacentHTML('beforeend', renderSettingsModal());
-  attachEvents();
-}
-
-function renderHeader(){
-  return `
-  <div class="app-header">
-    <div class="brand">
-      <div class="brand-mark">
-        <svg viewBox="0 0 24 24" fill="none"><path d="M12 3 L14 11 L21 12 L14 13 L12 21 L10 13 L3 12 L10 11 Z" fill="#191100"/></svg>
-      </div>
-      <div class="brand-text">
-        <h1>Formula Sukses</h1>
-        <p>Peta target · rencana · ceklis harian</p>
-      </div>
-    </div>
-    <div class="header-actions">
-      <button class="btn-icon" data-action="toggle-theme" title="Ganti tema">${state.theme==='dark'?'☀️':'🌙'}</button>
-      <button class="btn-icon" data-action="open-settings" title="Reminder Telegram">🔔</button>
-      ${state.view==='dashboard'
-        ? `<button class="btn btn-primary" data-action="new-goal">+ Target Baru</button>`
-        : `<button class="btn btn-outline" data-action="back-dashboard">← Semua Target</button>`}
-    </div>
-  </div>`;
-}
-
-/* ---------------- dashboard ---------------- */
-function renderDashboard(){
-  if(state.goals.length===0){
-    return `
-    <div class="empty-state">
-      <svg class="cmp" viewBox="0 0 100 100" fill="none">
-        <circle cx="50" cy="50" r="46" stroke="#D4A64A" stroke-width="2.5"/>
-        <circle cx="50" cy="50" r="3" fill="#1D3557"/>
-        <path d="M50 12 L58 48 L50 88 L42 48 Z" fill="#D4A64A"/>
-      </svg>
-      <h2>Belum ada target yang dibuat</h2>
-      <p>Mulai dengan menuliskan kondisi sekarang, kondisi yang diinginkan, dan strategi (HOW). Sistem akan otomatis memecahnya jadi rencana bulanan, pekanan, hingga ceklis harian.</p>
-      <button class="btn btn-primary" data-action="new-goal">+ Buat Target Pertama</button>
-    </div>`;
-  }
-  return `<div class="goal-grid">${state.goals.map(renderGoalCard).join('')}</div>`;
-}
-
-function renderGoalCard(g){
-  const { achieved, pct } = goalProgress(g);
-  const unit = goalUnit(g);
-  const circ = 2*Math.PI*32;
-  const dash = circ*(pct/100);
-  return `
-  <div class="goal-card" data-open="${g.id}">
-    <div class="goal-card-top">
-      <div class="goal-icon">${g.icon}</div>
-      <div>
-        <div class="goal-card-title">${escapeHtml(g.title)}</div>
-        <div class="goal-card-cat">${unit || 'Target'}</div>
-      </div>
-    </div>
-    <div class="goal-card-mid">
-      <div class="ring-wrap">
-        <svg width="76" height="76" viewBox="0 0 76 76">
-          <circle cx="38" cy="38" r="32" fill="none" stroke="var(--bg-card-alt)" stroke-width="7"/>
-          <circle cx="38" cy="38" r="32" fill="none" stroke="var(--teal)" stroke-width="7"
-            stroke-dasharray="${dash} ${circ}" stroke-linecap="round"/>
-        </svg>
-        <div class="ring-pct">${pct}%</div>
-      </div>
-      <div class="goal-card-stat">
-        <div class="row"><span>Tercapai</span><b>${fmtNum(achieved, unit)}</b></div>
-        <div class="row"><span>Target</span><b>${fmtNum(g.targetValue, unit)}</b></div>
-      </div>
-    </div>
-    <div class="goal-card-flow">→ <b>${escapeHtml(truncate(g.kondisiDiinginkan,60))}</b></div>
-    <div class="goal-card-actions">
-      <button class="btn btn-ghost btn-sm" data-action="edit-goal" data-id="${g.id}" title="Edit">✎ Edit</button>
-      <button class="btn btn-ghost btn-sm" data-action="delete-goal" data-id="${g.id}" title="Hapus">🗑 Hapus</button>
-    </div>
-  </div>`;
-}
-
-function truncate(s,n){ s=s||''; return s.length>n ? s.slice(0,n)+'…' : s; }
-function escapeHtml(s){ const d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
-function escapeAttr(s){ return (s||'').replace(/"/g,'&quot;'); }
-
-/* ---------------- detail view ---------------- */
-function renderDetail(){
-  const g = getGoal(state.activeGoalId);
-  if(!g){ state.view='dashboard'; return renderDashboard(); }
-  const { achieved, pct } = goalProgress(g);
-  const unit = goalUnit(g);
-  return `
-  <div class="detail-header">
-    <div class="detail-title-wrap">
-      <div class="detail-icon">${g.icon}</div>
-      <div class="detail-title">
-        <h2>${escapeHtml(g.title)}</h2>
-        <span>Mulai ${formatDate(g.startDate)} · ${unit || 'satuan bebas'}</span>
-      </div>
-    </div>
-    <button class="btn btn-outline btn-sm" data-action="edit-goal" data-id="${g.id}">✎ Edit Target</button>
-    <button class="btn btn-danger btn-sm" data-action="delete-goal" data-id="${g.id}">🗑 Hapus</button>
-  </div>
-  <div class="tabs">
-    <button class="tab-btn ${state.detailTab==='ringkasan'?'active':''}" data-action="tab" data-tab="ringkasan">1. Setup &amp; Ringkasan</button>
-    <button class="tab-btn ${state.detailTab==='rencana'?'active':''}" data-action="tab" data-tab="rencana">2. Bulanan &amp; Pekanan</button>
-    <button class="tab-btn ${state.detailTab==='harian'?'active':''}" data-action="tab" data-tab="harian">3. Ceklis Harian</button>
-  </div>
-  ${state.detailTab==='ringkasan' ? renderRingkasan(g,achieved,pct,unit) : ''}
-  ${state.detailTab==='rencana' ? renderRencana(g,unit) : ''}
-  ${state.detailTab==='harian' ? renderHarian(g,unit) : ''}
-  `;
-}
-
-function formatDate(iso){
-  if(!iso) return '-';
-  const d = new Date(iso+'T00:00:00');
-  return d.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
-}
-
-function renderRingkasan(g, achieved, pct, unit){
-  const todayCell = getTodayCell(g);
-  let todayTargetHtml = '';
-  if(todayCell){
-    const w = g.months[todayCell.mi].weeks[todayCell.wi];
-    const dt = roundSensible(dayTarget(w), unit);
-    todayTargetHtml = `
-    <div class="stat-box today-card">
-      <div class="num">${fmtNum(dt,unit)}</div>
-      <div class="lbl">Target Hari Ini</div>
-    </div>`;
-  }
-  return `
-  <div class="card">
-    <h4>📍 Bagian 1 — Kondisi &amp; Strategi</h4>
-    <div class="flow-pair">
-      <div class="flow-box now">
-        <div class="flow-label">Kondisi Sekarang</div>
-        <div class="flow-text">${escapeHtml(g.kondisiSekarang) || '—'}</div>
-      </div>
-      <div class="flow-arrow">→</div>
-      <div class="flow-box want">
-        <div class="flow-label">Kondisi yang Diinginkan</div>
-        <div class="flow-text">${escapeHtml(g.kondisiDiinginkan) || '—'}</div>
-      </div>
-    </div>
-    <div class="how-box">
-      <div class="flow-label">How — Strategi</div>
-      <div class="flow-text">${escapeHtml(g.how) || '—'}</div>
-    </div>
-    <div class="stat-row">
-      <div class="stat-box"><div class="num">${fmtNum(g.currentValue,unit)}</div><div class="lbl">Nilai Awal</div></div>
-      <div class="stat-box"><div class="num">${fmtNum(achieved,unit)}</div><div class="lbl">Tercapai</div></div>
-      <div class="stat-box"><div class="num">${fmtNum(g.targetValue,unit)}</div><div class="lbl">Target Akhir</div></div>
-      <div class="stat-box"><div class="num">${pct}%</div><div class="lbl">Progres</div></div>
-      ${todayTargetHtml}
-    </div>
-  </div>
-  <div class="card">
-    <h4>📈 Grafik Target vs Realisasi (12 Bulan)</h4>
-    ${renderChart(g, unit)}
-    <div class="legend">
-      <span><i style="background:var(--gold-deep)"></i>Target kumulatif (rencana)</span>
-      <span><i style="background:var(--teal)"></i>Realisasi kumulatif (aktual)</span>
-    </div>
-  </div>`;
-}
-
-function renderChart(g, unit){
-  const W=680,H=220,PAD=36;
-  const targetPts = [], actualPts=[];
-  for(let i=0;i<12;i++){
-    targetPts.push(g.currentValue + sumTargetUpToMonth(g,i));
-    actualPts.push(g.currentValue + sumActualUpToMonth(g,i));
-  }
-  const maxVal = Math.max(g.targetValue, ...targetPts, ...actualPts, 1);
-  const x = i => PAD + (i/11)*(W-PAD*2);
-  const y = v => H-PAD - (v/maxVal)*(H-PAD*2);
-  const pathFor = pts => pts.map((v,i)=> (i===0?'M':'L') + x(i).toFixed(1) + ' ' + y(v).toFixed(1)).join(' ');
-  const gridColor = state.theme==='dark' ? '#243654' : '#EBE1C8';
-  const textColor = state.theme==='dark' ? '#9BA6BF' : '#5B5F6B';
-  const gridLines = [0,0.25,0.5,0.75,1].map(f=>{
-    const yy = H-PAD-f*(H-PAD*2);
-    return `<line x1="${PAD}" y1="${yy}" x2="${W-PAD}" y2="${yy}" stroke="${gridColor}" stroke-width="1"/>
-    <text x="4" y="${yy+3}" font-size="9" fill="${textColor}" font-family="JetBrains Mono">${fmtCompact(maxVal*f, unit)}</text>`;
-  }).join('');
-  const monthTicks = [0,2,4,6,8,10].map(i=>`<text x="${x(i)}" y="${H-PAD+16}" font-size="9" fill="${textColor}" text-anchor="middle" font-family="Montserrat">${MONTH_NAMES[i].slice(0,3)}</text>`).join('');
-  return `<div style="overflow-x:auto;"><svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="min-width:${W}px;">
-    ${gridLines}
-    <path d="${pathFor(targetPts)}" fill="none" stroke="#A67C2E" stroke-width="2.5" stroke-dasharray="5 4"/>
-    <path d="${pathFor(actualPts)}" fill="none" stroke="#4C7B72" stroke-width="2.5"/>
-    ${actualPts.map((v,i)=>`<circle cx="${x(i)}" cy="${y(v)}" r="3" fill="#4C7B72"/>`).join('')}
-    ${monthTicks}
-  </svg></div>`;
-}
-
-function renderRencana(g, unit){
-  return `
-  <div class="card">
-    <h4>🗓️ Bagian 2 — Rencana Bulanan &amp; Pekanan</h4>
-    <p style="font-size:12.5px;color:var(--text-secondary);margin-top:-6px;">Angka otomatis dibagi rata dari target 1 tahun. Semua angka bisa diedit manual — klik lalu ketik.</p>
-    <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
-      <button class="btn btn-outline btn-sm" data-action="reset-auto" data-id="${g.id}">↺ Reset ke Pembagian Otomatis</button>
-    </div>
-    ${g.months.map((m,mi)=>renderMonthRow(g,m,mi,unit)).join('')}
-  </div>`;
-}
-
-function renderMonthRow(g,m,mi,unit){
-  const actual = sumActualForMonth(m,unit);
-  const pct = m.target>0 ? Math.min(100,Math.round((actual/m.target)*100)) : 0;
-  const isOpen = g._openMonth === mi;
-  return `
-  <div class="month-item">
-    <div class="month-head" data-action="toggle-month" data-id="${g.id}" data-mi="${mi}">
-      <span class="chevron ${isOpen?'open':''}">▶</span>
-      <div class="month-name">${MONTH_NAMES[mi]}</div>
-      <div>
-        <span class="mini-lbl">Target</span>
-        <input class="editable-num" type="number" value="${round2(m.target)}" data-action="set-month-target" data-id="${g.id}" data-mi="${mi}" onclick="event.stopPropagation()">
-      </div>
-      <div>
-        <span class="mini-lbl">Realisasi</span>
-        <div class="editable-num" style="cursor:default;">${fmtNum(actual,unit)}</div>
-      </div>
-      <div class="prog-mini prog-mini-cell"><div style="width:${pct}%"></div></div>
-      <div style="text-align:right;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-secondary);">${pct}%</div>
-    </div>
-    <div class="week-list ${isOpen?'open':''}">
-      ${m.weeks.map((w,wi)=>renderWeekRow(g,w,mi,wi,unit)).join('')}
-    </div>
-  </div>`;
-}
-function round2(n){ return Math.round(n*100)/100; }
-
-function renderWeekRow(g,w,mi,wi,unit){
-  const actual = sumActualForWeek(w,unit);
-  const pct = w.target>0 ? Math.min(100,Math.round((actual/w.target)*100)) : 0;
-  return `
-  <div class="week-row">
-    <div class="wk-name">Pekan ${wi+1}</div>
-    <div><span class="mini-lbl">Target</span><input class="editable-num" type="number" value="${round2(w.target)}" data-action="set-week-target" data-id="${g.id}" data-mi="${mi}" data-wi="${wi}"></div>
-    <div><span class="mini-lbl">Realisasi</span> ${fmtNum(actual,unit)} <span style="color:var(--text-secondary)">(${pct}%)</span></div>
-    <div class="prog-mini"><div style="width:${pct}%"></div></div>
-  </div>`;
-}
-
-function renderHarian(g, unit){
-  const selMonth = g._selMonth ?? 0;
-  const m = g.months[selMonth];
-  const todayCell = getTodayCell(g);
-  return `
-  <div class="card">
-    <h4>✅ Bagian 3 — Ceklis Harian</h4>
-    <p style="font-size:12.5px;color:var(--text-secondary);margin-top:-6px;">Diturunkan dari target pekanan ÷ 7 hari. Klik lingkaran untuk menandai selesai. Klik angka kecil untuk ubah jumlah aktual.</p>
-    <div class="day-controls">
-      <select data-action="select-month" data-id="${g.id}">
-        ${MONTH_NAMES.map((mn,i)=>`<option value="${i}" ${i===selMonth?'selected':''}>${mn}</option>`).join('')}
-      </select>
-      <span style="font-size:12px;color:var(--text-secondary);">Target bulan ini: <b class="mono" style="color:var(--text-primary)">${fmtNum(m.target,unit)}</b></span>
-      ${todayCell ? `<button class="btn btn-outline btn-sm" data-action="goto-today" data-id="${g.id}">📍 Lompat ke Hari Ini</button>` : ''}
-    </div>
-    ${m.weeks.map((w,wi)=>renderWeekBlock(g,w,selMonth,wi,unit,todayCell)).join('')}
-  </div>`;
-}
-
-function renderWeekBlock(g,w,mi,wi,unit,todayCell){
-  const dTarget = roundSensible(dayTarget(w), unit);
-  const actual = sumActualForWeek(w,unit);
-  return `
-  <div class="week-block">
-    <div class="week-block-head">
-      <b>Pekan ${wi+1}</b>
-      <span>${fmtNum(actual,unit)} / ${fmtNum(w.target,unit)} · ≈ ${fmtNum(dTarget,unit)}/hari</span>
-    </div>
-    <div class="day-grid">
-      ${w.days.map((d,di)=>renderDayCell(g,d,mi,wi,di,dTarget,unit,todayCell)).join('')}
-    </div>
-  </div>`;
-}
-
-function renderDayCell(g,d,mi,wi,di,dTarget,unit,todayCell){
-  const val = d.actual!==null && d.actual!==undefined ? d.actual : dTarget;
-  const isToday = todayCell && todayCell.mi===mi && todayCell.wi===wi && todayCell.di===di;
-  return `
-  <div class="day-cell ${d.checked?'done':''} ${isToday?'today':''}" data-action="toggle-day" data-id="${g.id}" data-mi="${mi}" data-wi="${wi}" data-di="${di}">
-    ${isToday ? '<div class="today-badge">HARI INI</div>' : ''}
-    <div class="d-num">Hari ${di+1}</div>
-    <div class="d-check">${d.checked?'✓':''}</div>
-    <div class="d-target">${fmtNum(dTarget,unit)}</div>
-    ${d.checked ? `<input class="d-actual-edit" type="number" value="${round2(val)}" data-action="set-day-actual" data-id="${g.id}" data-mi="${mi}" data-wi="${wi}" data-di="${di}" onclick="event.stopPropagation()">` : ''}
-  </div>`;
-}
-
-/* ---------------- goal modal ---------------- */
-function renderGoalModal(){
-  const editing = state.editingGoal;
-  const g = editing || { icon:'🎯', unit:'Rp', unitCustom:'', title:'', kondisiSekarang:'', kondisiDiinginkan:'', how:'', currentValue:0, targetValue:0, startDate: new Date().toISOString().slice(0,10) };
-  return `
-  <div class="overlay" data-action="close-modal">
-    <div class="modal" onclick="event.stopPropagation()">
-      <div class="modal-header">
-        <h3>${editing ? 'Edit Target' : 'Buat Target Baru'}</h3>
-        <button class="btn btn-ghost" data-action="close-modal">✕</button>
-      </div>
-      <div class="modal-body">
-        <div class="field">
-          <label>Nama Target</label>
-          <input type="text" id="f-title" value="${escapeAttr(g.title)}" placeholder="Contoh: Macbook Pro, Umroh, Turun Berat Badan">
-        </div>
-        <div class="field">
-          <label>Ikon</label>
-          <div class="icon-picker" id="icon-picker">
-            ${ICONS.map(ic=>`<div class="icon-choice ${g.icon===ic?'active':''}" data-icon="${ic}">${ic}</div>`).join('')}
-          </div>
-        </div>
-        <div class="field">
-          <label>Kondisi Sekarang</label>
-          <textarea id="f-now" placeholder="Contoh: Belum punya Macbook">${escapeHtml(g.kondisiSekarang)}</textarea>
-        </div>
-        <div class="field">
-          <label>Kondisi yang Diinginkan</label>
-          <textarea id="f-want" placeholder="Contoh: Punya Macbook Pro">${escapeHtml(g.kondisiDiinginkan)}</textarea>
-        </div>
-        <div class="field">
-          <label>How — Strategi</label>
-          <textarea id="f-how" placeholder="Contoh: Nabung 1 bulan 1 juta karena harganya 12 juta">${escapeHtml(g.how)}</textarea>
-        </div>
-        <div class="row2">
-          <div class="field">
-            <label>Satuan</label>
-            <select id="f-unit">
-              ${UNITS.map(u=>`<option value="${u}" ${g.unit===u?'selected':''}>${u==='custom'?'Lainnya...':u}</option>`).join('')}
-            </select>
-          </div>
-          <div class="field" id="f-unit-custom-wrap" style="${g.unit==='custom'?'':'display:none;'}">
-            <label>Nama Satuan Custom</label>
-            <input type="text" id="f-unit-custom" value="${escapeAttr(g.unitCustom||'')}" placeholder="misal: sesi, poin">
-          </div>
-        </div>
-        <div class="row2">
-          <div class="field">
-            <label>Nilai Sekarang</label>
-            <input type="number" id="f-current" value="${g.currentValue}">
-          </div>
-          <div class="field">
-            <label>Nilai Target</label>
-            <input type="number" id="f-target" value="${g.targetValue}">
-          </div>
-        </div>
-        <div class="field">
-          <label>Tanggal Mulai</label>
-          <input type="date" id="f-start" value="${g.startDate}">
-          <div class="hint">Rencana dibuat untuk 12 bulan ke depan sejak tanggal ini.</div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-outline" data-action="close-modal">Batal</button>
-        <button class="btn btn-primary" data-action="save-goal" data-id="${editing?editing.id:''}">${editing?'Simpan Perubahan':'Buat Target'}</button>
-      </div>
-    </div>
-  </div>`;
-}
-
-function renderDeleteModal(){
-  return `
-  <div class="overlay" data-action="close-modal">
-    <div class="modal modal-sm" onclick="event.stopPropagation()">
-      <div class="modal-header"><h3>Hapus Target?</h3></div>
-      <div class="modal-body"><p style="font-size:13.5px;color:var(--text-secondary);">Semua progres dan ceklis harian untuk target ini akan dihapus permanen.</p></div>
-      <div class="modal-footer">
-        <button class="btn btn-outline" data-action="close-modal">Batal</button>
-        <button class="btn btn-danger" data-action="confirm-delete">Ya, Hapus</button>
-      </div>
-    </div>
-  </div>`;
-}
-
-/* ---------------- settings / telegram modal ---------------- */
-function renderSettingsModal(){
-  const s = state.settings;
-  return `
-  <div class="overlay" data-action="close-modal">
-    <div class="modal" onclick="event.stopPropagation()">
-      <div class="modal-header">
-        <h3>🔔 Reminder via Telegram</h3>
-        <button class="btn btn-ghost" data-action="close-modal">✕</button>
-      </div>
-      <div class="modal-body">
-        <div class="help-box">
-          <b>Cara mendapatkan Bot Token &amp; Chat ID:</b><br>
-          1. Chat <code>@BotFather</code> di Telegram → <code>/newbot</code> → salin token yang diberikan.<br>
-          2. Kirim pesan apa saja ke bot barumu, lalu buka
-          <code>https://api.telegram.org/bot&lt;TOKEN&gt;/getUpdates</code> di browser untuk melihat <code>chat.id</code> milikmu.<br>
-          3. Tempel keduanya di bawah ini.
-        </div>
-        <div class="field">
-          <label>Bot Token</label>
-          <input type="text" id="s-token" value="${escapeAttr(s.botToken)}" placeholder="123456:ABC-DEF...">
-        </div>
-        <div class="field">
-          <label>Chat ID</label>
-          <input type="text" id="s-chatid" value="${escapeAttr(s.chatId)}" placeholder="123456789">
-        </div>
-        <div class="row2">
-          <div class="field">
-            <label>Waktu Reminder Harian</label>
-            <input type="time" id="s-time" value="${s.reminderTime}">
-          </div>
-          <div class="field">
-            <label>Status</label>
-            <div class="checkbox-row" style="margin-top:11px;">
-              <input type="checkbox" id="s-enabled" ${s.enabled?'checked':''}>
-              <label for="s-enabled">Aktifkan reminder otomatis</label>
-            </div>
-          </div>
-        </div>
-        <div class="hint">⚠️ Reminder otomatis hanya terkirim saat tab/halaman ini masih terbuka di browser — ini bukan notifikasi push server. Untuk memastikan bot bekerja, coba tombol "Kirim Tes Sekarang" di bawah.</div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-outline" data-action="close-modal">Tutup</button>
-        <button class="btn btn-teal" data-action="test-reminder">📤 Kirim Tes Sekarang</button>
-        <button class="btn btn-primary" data-action="save-settings">Simpan Pengaturan</button>
-      </div>
-    </div>
-  </div>`;
-}
-
-function composeReminderMessage(){
-  const today = new Date().toLocaleDateString('id-ID',{weekday:'long', day:'numeric', month:'long', year:'numeric'});
-  let lines = [`📋 <b>Reminder Formula Sukses</b>`, today, ''];
-  if(state.goals.length===0){ lines.push('Belum ada target yang dibuat.'); }
-  else{
-    let any=false;
-    state.goals.forEach(g=>{
-      const cell = getTodayCell(g);
-      if(!cell){ return; }
-      any = true;
-      const w = g.months[cell.mi].weeks[cell.wi];
-      const dt = roundSensible(dayTarget(w), goalUnit(g));
-      lines.push(`${g.icon} <b>${escapeForTelegram(g.title)}</b> — ${fmtNum(dt, goalUnit(g))} hari ini (Pekan ${cell.wi+1}, ${MONTH_NAMES[cell.mi]})`);
-    });
-    if(!any) lines.push('Semua target belum dimulai atau sudah melewati rencana 12 bulan.');
-  }
-  lines.push('', 'Ayo centang progres hari ini di aplikasi 💪');
-  return lines.join('\n');
-}
-function escapeForTelegram(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-async function sendTelegramMessage(text){
-  const { botToken, chatId } = state.settings;
-  if(!botToken || !chatId){ showToast('Isi Bot Token & Chat ID dulu'); return false; }
-  try{
-    const res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`,{
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ chat_id: chatId, text, parse_mode:'HTML' })
-    });
-    const data = await res.json();
-    if(data.ok){ showToast('Reminder terkirim ke Telegram ✅'); return true; }
-    showToast('Gagal kirim: ' + (data.description || 'cek token/chat id'));
-    return false;
-  }catch(e){
-    showToast('Gagal kirim: koneksi bermasalah');
-    return false;
-  }
-}
-
-function startReminderClock(){
-  if(reminderInterval) clearInterval(reminderInterval);
-  reminderInterval = setInterval(checkReminderTime, 20000);
-  checkReminderTime();
-}
-async function checkReminderTime(){
-  const s = state.settings;
-  if(!s.enabled || !s.botToken || !s.chatId) return;
-  const now = new Date();
-  const hhmm = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
-  const todayStr = now.toISOString().slice(0,10);
-  if(hhmm === s.reminderTime && s.lastSentDate !== todayStr){
-    const ok = await sendTelegramMessage(composeReminderMessage());
-    if(ok){ s.lastSentDate = todayStr; saveSettings(); }
-  }
-}
-
-/* ---------------- events ---------------- */
-function attachEvents(){
-  const app = document.getElementById('app');
-
-  app.querySelectorAll('[data-open]').forEach(el=>{
-    el.addEventListener('click', (e)=>{
-      if(e.target.closest('[data-action]')) return;
-      state.activeGoalId = el.getAttribute('data-open');
-      state.view='detail'; state.detailTab='ringkasan';
-      render();
-    });
   });
 
-  app.querySelectorAll('[data-action="back-dashboard"]').forEach(el=>el.addEventListener('click',()=>{
-    state.view='dashboard'; render();
-  }));
-  app.querySelectorAll('[data-action="toggle-theme"]').forEach(el=>el.addEventListener('click', toggleTheme));
-  app.querySelectorAll('[data-action="open-settings"]').forEach(el=>el.addEventListener('click',()=>{
-    state.modal='settings'; render();
-  }));
+  const totalMasuk = transaksi.filter(t=>t.jenis==="pemasukan").reduce((a,t)=>a+Number(t.jumlah),0);
+  const totalKeluar = transaksi.filter(t=>t.jenis==="pengeluaran").reduce((a,t)=>a+Number(t.jumlah),0);
+  const totalTabungan = transaksi.filter(t=>t.jenis==="tabungan").reduce((a,t)=>a+Number(t.jumlah),0);
 
-  app.querySelectorAll('[data-action="new-goal"]').forEach(el=>el.addEventListener('click',()=>{
-    state.editingGoal=null; state.modal='goal'; render();
-  }));
-  app.querySelectorAll('[data-action="edit-goal"]').forEach(el=>el.addEventListener('click',(e)=>{
-    e.stopPropagation();
-    state.editingGoal = getGoal(el.getAttribute('data-id')); state.modal='goal'; render();
-  }));
-  app.querySelectorAll('[data-action="delete-goal"]').forEach(el=>el.addEventListener('click',(e)=>{
-    e.stopPropagation();
-    state._deleteId = el.getAttribute('data-id'); state.modal='delete-confirm'; render();
-  }));
-  app.querySelectorAll('[data-action="close-modal"]').forEach(el=>el.addEventListener('click',()=>{
-    state.modal=null; state.editingGoal=null; render();
-  }));
-  app.querySelectorAll('[data-action="confirm-delete"]').forEach(el=>el.addEventListener('click',()=>{
-    state.goals = state.goals.filter(g=>g.id!==state._deleteId);
-    if(state.activeGoalId===state._deleteId){ state.view='dashboard'; state.activeGoalId=null; }
-    state.modal=null; saveGoals(); showToast('Target dihapus'); render();
-  }));
-
-  app.querySelectorAll('#icon-picker .icon-choice').forEach(el=>el.addEventListener('click',()=>{
-    app.querySelectorAll('#icon-picker .icon-choice').forEach(x=>x.classList.remove('active'));
-    el.classList.add('active');
-  }));
-  const unitSel = document.getElementById('f-unit');
-  if(unitSel){
-    unitSel.addEventListener('change', ()=>{
-      document.getElementById('f-unit-custom-wrap').style.display = unitSel.value==='custom' ? '' : 'none';
-    });
-  }
-  app.querySelectorAll('[data-action="save-goal"]').forEach(el=>el.addEventListener('click',()=>{
-    saveGoalFromForm(el.getAttribute('data-id'));
-  }));
-
-  app.querySelectorAll('[data-action="tab"]').forEach(el=>el.addEventListener('click',()=>{
-    state.detailTab = el.getAttribute('data-tab'); render();
-  }));
-
-  app.querySelectorAll('[data-action="toggle-month"]').forEach(el=>el.addEventListener('click',()=>{
-    const g = getGoal(el.getAttribute('data-id')); const mi = +el.getAttribute('data-mi');
-    g._openMonth = (g._openMonth===mi) ? null : mi; render();
-  }));
-  app.querySelectorAll('[data-action="set-month-target"]').forEach(el=>{
-    el.addEventListener('change', ()=>{
-      const g = getGoal(el.getAttribute('data-id')); const mi = +el.getAttribute('data-mi');
-      g.months[mi].target = parseFloat(el.value)||0; saveGoals(); render();
-    });
-  });
-  app.querySelectorAll('[data-action="set-week-target"]').forEach(el=>{
-    el.addEventListener('change', ()=>{
-      const g = getGoal(el.getAttribute('data-id')); const mi=+el.getAttribute('data-mi'); const wi=+el.getAttribute('data-wi');
-      g.months[mi].weeks[wi].target = parseFloat(el.value)||0; saveGoals(); render();
-    });
-  });
-  app.querySelectorAll('[data-action="reset-auto"]').forEach(el=>el.addEventListener('click',()=>{
-    const g = getGoal(el.getAttribute('data-id'));
-    g.months = buildDefaultMonths(g.currentValue, g.targetValue);
-    saveGoals(); showToast('Rencana direset ke pembagian otomatis'); render();
-  }));
-
-  app.querySelectorAll('[data-action="select-month"]').forEach(el=>el.addEventListener('change',()=>{
-    const g = getGoal(el.getAttribute('data-id')); g._selMonth = +el.value; render();
-  }));
-  app.querySelectorAll('[data-action="goto-today"]').forEach(el=>el.addEventListener('click',()=>{
-    const g = getGoal(el.getAttribute('data-id')); const cell = getTodayCell(g);
-    if(cell){ g._selMonth = cell.mi; render(); }
-  }));
-
-  app.querySelectorAll('[data-action="toggle-day"]').forEach(el=>el.addEventListener('click',(e)=>{
-    if(e.target.closest('[data-action="set-day-actual"]')) return;
-    const g = getGoal(el.getAttribute('data-id'));
-    const mi=+el.getAttribute('data-mi'), wi=+el.getAttribute('data-wi'), di=+el.getAttribute('data-di');
-    const day = g.months[mi].weeks[wi].days[di];
-    day.checked = !day.checked;
-    if(day.checked && (day.actual===null||day.actual===undefined)){
-      day.actual = roundSensible(dayTarget(g.months[mi].weeks[wi]), goalUnit(g));
+  const barCtx = document.getElementById("barChart");
+  if(barChart) barChart.destroy();
+  barChart = new Chart(barCtx, {
+    type: "bar",
+    data: {
+      labels: ["Pemasukan","Pengeluaran","Tabungan"],
+      datasets: [{ data:[totalMasuk, totalKeluar, totalTabungan],
+        backgroundColor:["#4C7A6C","#B25A42","#B4863A"], borderRadius:6, maxBarThickness:60 }]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, title:{display:true, text:"Arus Kas Bulan Ini", font:{size:12, family:"Inter", weight:600}, color:"#16231F", padding:{bottom:10}} },
+      scales:{ y:{ ticks:{ callback:(v)=>"Rp "+(v/1000)+"rb", font:{size:10, family:"IBM Plex Mono"}, color:"#5B6B63" }, grid:{color:"#EAE7DC"} },
+                x:{ ticks:{font:{size:11, family:"Inter"}, color:"#5B6B63"}, grid:{display:false} } }
     }
-    saveGoals(); render();
-  }));
-  app.querySelectorAll('[data-action="set-day-actual"]').forEach(el=>{
-    el.addEventListener('click', e=>e.stopPropagation());
-    el.addEventListener('change', ()=>{
-      const g = getGoal(el.getAttribute('data-id'));
-      const mi=+el.getAttribute('data-mi'), wi=+el.getAttribute('data-wi'), di=+el.getAttribute('data-di');
-      g.months[mi].weeks[wi].days[di].actual = parseFloat(el.value)||0;
-      saveGoals(); render();
-    });
   });
-
-  app.querySelectorAll('[data-action="save-settings"]').forEach(el=>el.addEventListener('click',()=>{
-    state.settings.botToken = document.getElementById('s-token').value.trim();
-    state.settings.chatId = document.getElementById('s-chatid').value.trim();
-    state.settings.reminderTime = document.getElementById('s-time').value || '07:00';
-    state.settings.enabled = document.getElementById('s-enabled').checked;
-    saveSettings();
-    state.modal=null; showToast('Pengaturan reminder disimpan'); render();
-  }));
-  app.querySelectorAll('[data-action="test-reminder"]').forEach(el=>el.addEventListener('click',()=>{
-    const token = document.getElementById('s-token').value.trim();
-    const chatId = document.getElementById('s-chatid').value.trim();
-    state.settings.botToken = token; state.settings.chatId = chatId;
-    sendTelegramMessage(composeReminderMessage());
-  }));
 }
 
-function saveGoalFromForm(existingId){
-  const title = document.getElementById('f-title').value.trim();
-  if(!title){ showToast('Nama target wajib diisi'); return; }
-  const icon = document.querySelector('#icon-picker .icon-choice.active')?.getAttribute('data-icon') || '🎯';
-  const unit = document.getElementById('f-unit').value;
-  const unitCustom = document.getElementById('f-unit-custom')?.value.trim() || '';
-  const currentValue = parseFloat(document.getElementById('f-current').value)||0;
-  const targetValue = parseFloat(document.getElementById('f-target').value)||0;
-  const startDate = document.getElementById('f-start').value;
-  const kondisiSekarang = document.getElementById('f-now').value.trim();
-  const kondisiDiinginkan = document.getElementById('f-want').value.trim();
-  const how = document.getElementById('f-how').value.trim();
+function refreshAll(){
+  renderSaldo(hitungSaldo());
+  renderTable(state.transaksi);
+  renderCharts(state.transaksi);
+}
 
-  if(existingId){
-    const g = getGoal(existingId);
-    const valueChanged = g.currentValue!==currentValue || g.targetValue!==targetValue;
-    Object.assign(g, { title, icon, unit, unitCustom, currentValue, targetValue, startDate, kondisiSekarang, kondisiDiinginkan, how });
-    if(valueChanged){ g.months = buildDefaultMonths(currentValue,targetValue); }
-    showToast('Target diperbarui');
+async function loadData(){
+  if(APPS_SCRIPT_URL){
+    document.getElementById("configNote").style.display = "none";
+    try{
+      const res = await fetch(`${APPS_SCRIPT_URL}?key=${encodeURIComponent(SECRET_KEY)}`);
+      const data = await res.json();
+      renderSaldo(data.saldo);
+      renderTable(data.transaksi);
+      renderCharts(data.transaksi);
+      return;
+    }catch(err){
+      console.error("Gagal mengambil data dari Apps Script, pakai data lokal:", err);
+    }
+  }
+  refreshAll();
+}
+
+document.getElementById("initForm").addEventListener("submit", async (e)=>{
+  e.preventDefault();
+  state.saldoAwal = {
+    saldoUtama: Number(document.getElementById("initSaldoUtama").value.replace(/\D/g,"")) || 0,
+    saldoTabungan: Number(document.getElementById("initSaldoTabungan").value.replace(/\D/g,"")) || 0,
+    sisaHutang: Number(document.getElementById("initSisaHutang").value.replace(/\D/g,"")) || 0,
+  };
+  if(APPS_SCRIPT_URL){
+    try{
+      await fetch(APPS_SCRIPT_URL, { method:"POST", body: JSON.stringify({ ...state.saldoAwal, key: SECRET_KEY, action:"setSaldoAwal" }) });
+      loadData();
+      return;
+    }catch(err){ console.error("Gagal simpan saldo awal ke Apps Script:", err); }
+  }
+  saveState();
+  refreshAll();
+});
+
+[["initSaldoUtama"],["initSaldoTabungan"],["initSisaHutang"]].forEach(([id])=>{
+  document.getElementById(id).addEventListener("input", (e)=>{
+    let raw = e.target.value.replace(/\D/g, "");
+    e.target.value = raw ? Number(raw).toLocaleString("id-ID") : "";
+  });
+});
+function isiFormSaldoAwal(){
+  document.getElementById("initSaldoUtama").value = state.saldoAwal.saldoUtama ? state.saldoAwal.saldoUtama.toLocaleString("id-ID") : "";
+  document.getElementById("initSaldoTabungan").value = state.saldoAwal.saldoTabungan ? state.saldoAwal.saldoTabungan.toLocaleString("id-ID") : "";
+  document.getElementById("initSisaHutang").value = state.saldoAwal.sisaHutang ? state.saldoAwal.sisaHutang.toLocaleString("id-ID") : "";
+}
+
+document.getElementById("txForm").addEventListener("submit", async (e)=>{
+  e.preventDefault();
+  const kategori = document.getElementById("kategori").value;
+  const keterangan = document.getElementById("keterangan").value || "-";
+  const jumlah = getJumlahValue();
+  const errBox = document.getElementById("formError");
+  if(!jumlah || jumlah <= 0){ errBox.style.display = "block"; jumlahInput.focus(); return; }
+  errBox.style.display = "none";
+
+  const jenisFinal = kategori === "Tabungan" ? "tabungan" : currentJenis;
+  const payload = { jenis: jenisFinal, kategori, keterangan, jumlah, sumber: "html" };
+
+  if(APPS_SCRIPT_URL){
+    try{
+      await fetch(APPS_SCRIPT_URL, {
+        method:"POST",
+        body: JSON.stringify({
+          ...payload,
+          key: SECRET_KEY,
+          action: editingId ? "update" : "add",
+          id: editingId || undefined
+        }),
+      });
+      batalEdit();
+      loadData();
+      return;
+    }catch(err){
+      console.error("Gagal kirim ke Apps Script, disimpan lokal saja:", err);
+    }
+  }
+
+  if(editingId){
+    const idx = state.transaksi.findIndex(t => t.id === editingId);
+    if(idx > -1){
+      state.transaksi[idx] = { ...state.transaksi[idx], ...payload };
+    }
   } else {
-    const g = {
-      id: uid(), title, icon, unit, unitCustom, currentValue, targetValue, startDate,
-      kondisiSekarang, kondisiDiinginkan, how,
-      months: buildDefaultMonths(currentValue,targetValue),
-      _openMonth: null, _selMonth: 0
-    };
-    state.goals.push(g);
-    showToast('Target baru dibuat 🎯');
+    state.transaksi.unshift({
+      id: "t" + Date.now(),
+      tanggal: new Date().toLocaleDateString("id-ID", { day:"numeric", month:"short" }),
+      ...payload
+    });
   }
-  state.modal=null; state.editingGoal=null;
-  saveGoals(); render();
-}
+  saveState();
+  refreshAll();
+  batalEdit();
+});
 
-/* ---------------- init ---------------- */
-document.getElementById('app').innerHTML = `<div class="loading-screen"><div class="brand-mark" style="width:56px;height:56px;"></div><p>Memuat data target...</p></div>`;
-loadAll();
+document.getElementById("todayStamp").textContent = new Date().toLocaleDateString("id-ID", { day:"numeric", month:"long", year:"numeric" });
+
+try{
+  populateKategori();
+  isiFormSaldoAwal();
+  loadData();
+}catch(err){
+  console.error("Gagal inisialisasi:", err);
+}
 </script>
 </body>
 </html>
